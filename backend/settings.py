@@ -16,13 +16,17 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-!7j1#r!6h(hj41$u5ji_c
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+# ✅ AÑADIR dominio de Railway aquí
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1,backendp2-production.up.railway.app'
+).split(',')
 
-# Permitir confianza para Railway
+# ✅ Para que Django acepte solicitudes seguras desde Railway
 CSRF_TRUSTED_ORIGINS = [
     "https://*.up.railway.app",
     "https://*.railway.app",
-] + [f"https://{h}" for h in ALLOWED_HOSTS if h not in ("*", "")]
+] + [f"https://{h}" for h in ALLOWED_HOSTS if h not in ("*", "", "localhost", "127.0.0.1")]
 
 # Apps
 INSTALLED_APPS = [
@@ -117,12 +121,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS
+# ✅ CORS - permite frontend local y desplegado
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'https://frontend-p2.vercel.app',
+    'https://frontend-p2.vercel.app',  # tu frontend en producción
 ]
+
 CORS_ALLOW_CREDENTIALS = True
 
 # Stripe
