@@ -1,0 +1,9 @@
+{
+  "trained_at": "2025-10-27T15:39:32.792244+00:00",
+  "samples": 24,
+  "invoice_count": 234,
+  "product_count": 20,
+  "category_count": 10,
+  "period_from": "2023-11",
+  "period_to": "2025-10"
+}

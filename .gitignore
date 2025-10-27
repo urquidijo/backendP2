@@ -1,0 +1,29 @@
+# ---- Python / Django ----
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+.env
+venv/
+.env.local
+db.sqlite3
+
+# ---- Django static/media ----
+/staticfiles
+/media
+
+# ---- Node / React ----
+node_modules/
+dist/
+build/
+
+# ---- VSCode ----
+.vscode/
+*.code-workspace
+
+# ---- Sistema ----
+.DS_Store
+Thumbs.db
