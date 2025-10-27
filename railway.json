@@ -4,7 +4,7 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "python manage.py migrate --fake && python manage.py collectstatic --noinput && gunicorn --timeout 500 backend.wsgi",
+        "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn --timeout 500 backend.wsgi",
         "restartPolicyType": "NEVER",
         "restartPolicyMaxRetries": 10
     }
