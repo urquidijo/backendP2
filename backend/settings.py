@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from logging import config
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -28,11 +29,13 @@ SECRET_KEY = 'django-insecure-!7j1#r!6h(hj41$u5ji_cf*hy1!%&t3&r-kwfde)&8d)81dck%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '10.0.2.2',
-]
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+
+# Permitir confianza para Railway
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.up.railway.app",
+    "https://*.railway.app",
+] + [f"https://{h}" for h in ALLOWED_HOSTS if h not in ("*", "")]
 
 # AUTH_USER_MODEL = 'usuarios.Usuario'
 
