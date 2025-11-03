@@ -19,7 +19,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 # ✅ AÑADIR dominio de Railway aquí
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1,backendp2-production.up.railway.app'
+    default='localhost,127.0.0.1,web-production-a6f44.up.railway.app'
 ).split(',')
 
 # ✅ Para que Django acepte solicitudes seguras desde Railway
