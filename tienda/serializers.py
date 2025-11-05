@@ -43,7 +43,11 @@ class CategoriaSerializer(serializers.ModelSerializer):
 class ProductoSerializer(serializers.ModelSerializer):
     categoria = CategoriaSerializer(read_only=True)
     categoria_id = serializers.PrimaryKeyRelatedField(
-        queryset=Categoria.objects.all(), source='categoria', write_only=True
+        queryset=Categoria.objects.all(),
+        source='categoria',
+        write_only=True,
+        required=False,
+        allow_null=True,
     )
     active_discount = serializers.SerializerMethodField()
 

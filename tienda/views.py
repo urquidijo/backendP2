@@ -4,6 +4,8 @@ from django.db.models import F, Q
 from django.utils import timezone
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -18,6 +20,7 @@ from .serializers import (
     CarritoSerializer,
     CarritoDetalleSerializer,
 )
+from .s3_utils import S3UploadError, upload_product_image
 
 
 class CategoriaViewSet(viewsets.ModelViewSet):
@@ -28,6 +31,44 @@ class CategoriaViewSet(viewsets.ModelViewSet):
 class ProductoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def _prepare_payload(self, request):
+        data = request.data.copy()
+
+        imagen_file = request.FILES.get("imagen_archivo") or request.FILES.get("imagen")
+        if imagen_file:
+            try:
+                imagen_url = upload_product_image(imagen_file, filename=imagen_file.name)
+            except S3UploadError as exc:
+                raise ValidationError({"imagen": [str(exc)]})
+            data["imagen"] = imagen_url
+
+        if data.get("imagen") == "":
+            data["imagen"] = None
+
+        categoria_val = data.get("categoria_id")
+        if categoria_val in {"", "null", "None"}:
+            data["categoria_id"] = None
+
+        return data
+
+    def create(self, request, *args, **kwargs):
+        data = self._prepare_payload(request)
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        data = self._prepare_payload(request)
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         serializer.save()

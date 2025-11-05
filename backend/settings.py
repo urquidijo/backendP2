@@ -141,3 +141,11 @@ ANALITICA_MODEL_DIR = config(
     'ANALITICA_MODEL_DIR',
     default=str(BASE_DIR / 'analitica' / 'model_cache'),
 )
+
+# AWS S3
+AWS_REGION = config('AWS_REGION', default='us-east-1')
+AWS_S3_BUCKET_NAME = config('AWS_S3_BUCKET_NAME', default=None)
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default=None)
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default=None)
+AWS_S3_BASE_URL = config('AWS_S3_BASE_URL', default=None)
+AWS_S3_OBJECT_ACL = config('AWS_S3_OBJECT_ACL', default='public-read')
