@@ -43,6 +43,12 @@ class ProductoViewSet(viewsets.ModelViewSet):
             except S3UploadError as exc:
                 raise ValidationError({"imagen": [str(exc)]})
             data["imagen"] = imagen_url
+            # Remove the helper field so the serializer does not complain about an unknown key.
+            if "imagen_archivo" in data:
+                data.pop("imagen_archivo")
+        else:
+            # Make sure we do not leak the helper field when no upload took place.
+            data.pop("imagen_archivo", None)
 
         if data.get("imagen") == "":
             data["imagen"] = None
@@ -69,6 +75,14 @@ class ProductoViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Handle PATCH requests with the same preprocessing logic used for PUT.
+        Ensures new product images uploaded via multipart FormData are persisted.
+        """
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save()

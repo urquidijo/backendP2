@@ -2,6 +2,7 @@ import mimetypes
 import os
 import uuid
 import logging
+from io import BytesIO
 from typing import IO, Optional
 
 import boto3
@@ -77,12 +78,41 @@ def upload_product_image(upload: IO[bytes], filename: Optional[str] = None) -> s
     if content_type:
         extra_args["ContentType"] = content_type
 
+    def _read_upload_bytes() -> bytes:
+        open_callable = getattr(upload, "open", None)
+
+        if getattr(upload, "closed", False) and callable(open_callable):
+            open_callable()
+
+        try:
+            upload.seek(0)
+        except (AttributeError, OSError, ValueError):
+            if callable(open_callable):
+                open_callable()
+                upload.seek(0)
+            else:
+                raise S3UploadError("No pudimos preparar la imagen para subirla en S3.")
+
+        data = upload.read()
+        if not data:
+            raise S3UploadError("El archivo de imagen esta vacio o no se pudo leer.")
+
+        # Volvemos a dejar el stream al inicio en caso de que Django quiera reutilizarlo
+        try:
+            upload.seek(0)
+        except (AttributeError, OSError, ValueError):
+            pass
+
+        return data
+
+    upload_bytes = _read_upload_bytes()
+
     def _do_upload(args: Optional[dict]):
-        upload.seek(0)
+        fileobj = BytesIO(upload_bytes)
         if args:
-            client.upload_fileobj(upload, bucket, key, ExtraArgs=args)
+            client.upload_fileobj(fileobj, bucket, key, ExtraArgs=args)
         else:
-            client.upload_fileobj(upload, bucket, key)
+            client.upload_fileobj(fileobj, bucket, key)
 
     try:
         _do_upload(extra_args or None)
