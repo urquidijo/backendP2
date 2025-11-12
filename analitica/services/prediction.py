@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -255,7 +255,19 @@ def _aggregate_category_monthly_sales(rows: List[Dict]):
     return df, category_totals
 
 
-def get_historical_breakdown():
+def _apply_limit(items: List[Dict], limit: Optional[int]) -> List[Dict]:
+    if limit is None:
+        return items
+    try:
+        limit_value = int(limit)
+    except (TypeError, ValueError):
+        return items
+    if limit_value <= 0:
+        return items
+    return items[:limit_value]
+
+
+def get_historical_breakdown(*, limit_products: Optional[int] = None, limit_customers: Optional[int] = 8):
     _, rows = _aggregate_monthly_sales()
     monthly_totals = rows
 
@@ -324,8 +336,8 @@ def get_historical_breakdown():
 
     return {
         "monthly_totals": monthly_totals,
-        "by_product": product_summary[:20],
-        "by_customer": customer_summary[:8],
+        "by_product": _apply_limit(product_summary, limit_products),
+        "by_customer": _apply_limit(customer_summary, limit_customers),
         "by_category": category_summary,
     }
 

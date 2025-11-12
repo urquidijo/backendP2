@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 import stripe
 from django.conf import settings
-from django.db.models import F, Q
+from django.db.models import F, Q, Sum
 from django.db.models.functions import Greatest
 from django.utils import timezone
 from rest_framework import status
@@ -160,6 +160,28 @@ class FacturaListView(ListAPIView):
         if usuario_id:
             queryset = queryset.filter(usuario_id=usuario_id)
         return queryset
+
+
+class FacturaSummaryView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, _request):
+        queryset = Factura.objects.all()
+        total_count = queryset.count()
+        total_amount = queryset.aggregate(total=Sum('amount_total'))['total'] or Decimal('0')
+
+        real_queryset = queryset.exclude(stripe_invoice_id__startswith='SYNTH-')
+        real_count = real_queryset.count()
+        real_amount = real_queryset.aggregate(total=Sum('amount_total'))['total'] or Decimal('0')
+
+        return Response(
+            {
+                'count': total_count,
+                'amount_total': float(total_amount),
+                'real_count': real_count,
+                'real_amount_total': float(real_amount),
+            }
+        )
 
 
 class StripeWebhookView(APIView):

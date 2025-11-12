@@ -21,7 +21,14 @@ class ReportPromptView(APIView):
             return Response({"detail": "Debes ingresar un prompt."}, status=status.HTTP_400_BAD_REQUEST)
 
         parsed = parse_prompt(prompt, preferred_format=format_override)
-        report = build_report(parsed.group_by, parsed.start_date, parsed.end_date)
+        report = build_report(
+            parsed.group_by,
+            parsed.start_date,
+            parsed.end_date,
+            include_invoice_counts=parsed.include_purchase_counts,
+            include_date_span=parsed.include_date_span,
+            order_by_date=parsed.order_by_date,
+        )
         report["channel"] = channel
         report["prompt"] = prompt
 
@@ -34,21 +41,9 @@ class ReportPromptView(APIView):
                     "format": parsed.report_format,
                     "prompt": prompt,
                 },
-                "summary": [
-                    {
-                        "label": entry["label"],
-                        "monto_total": float(entry["monto_total"]),
-                        "cantidad": entry["cantidad"],
-                    }
-                    for entry in report["summary"]
-                ],
-                "rows": [
-                    {
-                        **row,
-                        "monto_total": float(row["monto_total"]),
-                    }
-                    for row in report["rows"]
-                ],
+                "summary": report["summary"],
+                "summary_fields": report.get("summary_fields"),
+                "rows": report["rows"],
             }
             return Response(serialized, status=status.HTTP_200_OK)
 
@@ -73,8 +68,29 @@ class ReportPromptView(APIView):
 
 
 class SalesHistoryView(APIView):
-    def get(self, _request):
-        data = get_historical_breakdown()
+    def get(self, request):
+        def _parse_limit(param_name: str):
+            raw_value = request.query_params.get(param_name)
+            if raw_value in (None, ""):
+                return None
+            try:
+                parsed = int(raw_value)
+            except (TypeError, ValueError):
+                raise ValueError(f"El parámetro {param_name} debe ser un número entero.")
+            if parsed <= 0:
+                return None
+            return parsed
+
+        try:
+            limit_products = _parse_limit("limit_products")
+            limit_customers = _parse_limit("limit_customers")
+        except ValueError as error:
+            return Response({"detail": str(error)}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = get_historical_breakdown(
+            limit_products=limit_products,
+            limit_customers=limit_customers,
+        )
         return Response(data, status=status.HTTP_200_OK)
 
 

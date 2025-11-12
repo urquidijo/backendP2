@@ -27,6 +27,9 @@ class PromptData:
     report_format: str
     start_date: Optional[date]
     end_date: Optional[date]
+    order_by_date: bool = True
+    include_purchase_counts: bool = False
+    include_date_span: bool = False
 
 
 def _parse_explicit_dates(prompt: str):
@@ -99,10 +102,31 @@ def parse_prompt(prompt: str, preferred_format: Optional[str] = None) -> PromptD
     report_format = _detect_format(normalized, preferred_format)
     group_by = _detect_group(normalized)
 
+    include_purchase_counts = any(
+        phrase in normalized
+        for phrase in (
+            "cantidad de compras",
+            "numero de compras",
+            "número de compras",
+            "compras que realiz",
+        )
+    )
+    include_date_span = any(
+        phrase in normalized
+        for phrase in (
+            "rango de fechas",
+            "rango de compra",
+            "fechas en las que",
+        )
+    )
+
     return PromptData(
         prompt=prompt,
         group_by=group_by,
         report_format=report_format,
         start_date=start_date,
         end_date=end_date,
+        order_by_date=True,
+        include_purchase_counts=include_purchase_counts,
+        include_date_span=include_date_span,
     )
